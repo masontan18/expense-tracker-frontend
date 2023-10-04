@@ -32,7 +32,7 @@ function signOut () {
 				</option>
 			</select>
 			<div class="flex flex-row items-center">
-				<a class="btn btn-outline btn-accent flex-none" href="/login" on:click={signOut}>
+				<a class="btn btn-outline btn-accent flex-none" href="/" on:click={signOut}>
 					Log Out
 				</a>
 			</div>
