@@ -1,4 +1,5 @@
 import { PUBLIC_BACKEND_BASE_URL } from '$env/static/public';
+import { isLogin } from './stores';
 
 
 const emptyAuth = {
@@ -9,6 +10,7 @@ const emptyAuth = {
 
 export async function logOut() {
 	localStorage.setItem('auth', JSON.stringify(emptyAuth));
+	isLogin.set(false)
 	return true;
 }
 
@@ -36,6 +38,7 @@ export function getRefreshTokenFromLocalStorage() {
 	return null;
 }
 
+//to check whether user is actually logged into the account
 export async function isLoggedIn() {
 	if (!getRefreshTokenFromLocalStorage()) {
 		return false;

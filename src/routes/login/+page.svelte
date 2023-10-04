@@ -1,74 +1,57 @@
 <script>
 	import '../../app.css';
 	import Footer from '../../lib/Footer.svelte';
-	import { PUBLIC_BACKEND_BASE_URL } from '$env/static/public';
-	import { onMount } from 'svelte';
-	import { themeChange } from 'theme-change';
 	import { isLogin } from '../../utils/stores.js';
+	import { themeChange } from 'theme-change';
+	import { onMount } from 'svelte';
 	import { isLoggedIn } from '../../utils/auth.js';
 	import { goto } from '$app/navigation';
 	import { authenticateUser } from '../../utils/auth.js';
-
-	let formErrors = {};
-	let clicked = false;
-
+	// NOTE: the element that is using one of the theme attributes must be in the DOM on mount
+	
 	onMount(async () => {
+		// themeChange(false);
+		// if (isLoggedIn)
+		// 	isLogin.set(true);
+		// else 
+		// 	isLogin.set(false);
 		themeChange(false);
 		// 👆 false parameter is required for svelte
 
+		// check local storage to see if login-ed, refer function named "isLoggedIn" in auth.js
 		isLogin.set(await isLoggedIn());
-		// isLogin.set(true);
+	
 	});
 
-	function postSignUp() {
+	function signUpLogIn() {
 		isLogin.set(true);
 		goto('/homepage');
 	}
 
-	let isLoading = false;
-	$: buttonClass = `btn btn-md login-btn ${isLoading ? 'btn--loading' : ''}`;
 
-	async function createUser(evt) {
-		evt.preventDefault();
-		clicked = true;
-
-		if (evt.target['password'].value != evt.target['password-confirmation'].value) {
-			formErrors['password'] = { message: 'Password confirmation does not match' };
-			clicked = false;
-			return;
-		}
+	// loading spin when clicked button
+	let isSpin = false
+	$: buttonClass = `btn btn-md login-btn ${isSpin ? "btn--loading" : ""}`;
+	const submitFunct = async (event) => {
+		event.preventDefault();
+		isSpin = true
 
 		const userData = {
-			email: evt.target['email'].value,
-			password: evt.target['password'].value
+			email: event.target.email.value,
+			password: event.target.password.value
 		};
 
-		const resp = await fetch(PUBLIC_BACKEND_BASE_URL + '/users', {
-			// remember this is for POSTing DATA to Backend
-			method: 'POST',
-			mode: 'cors',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(userData)
-		});
-		console.log(resp.status);
-		if (resp.status == 201) {
-			const res = await authenticateUser(userData.email, userData.password);
+		const res = await authenticateUser(userData.email, userData.password);
 
-			if (res.success) {
-				// signUpAlert()
-				postSignUp();
-			} else {
-				throw 'Sign up succeeded but authentication failed';
-			}
+		if (res.success) {
+			isSpin = false
+			signUpLogIn();
 		} else {
-			clicked = false;
-			// const res = await resp.json();
-			// formErrors = res.data;
-			throw 'Sign up failed';
+			isSpin = false
+			alert('Wrong email Or Password');
+			throw 'Authentication failed';
 		}
-	}
+	};
 
 	let enteredEmail = '';
 	let emailIsValid = false;
@@ -108,45 +91,22 @@
 		}
 	};
 
-	let enteredConfirmPassword = '';
-	let confirmPasswordIsValid = false;
-	let confirmPasswordIsTouched = false;
-	$: confirmPasswordHasError = !confirmPasswordIsValid && confirmPasswordIsTouched;
-	const confirmPasswordChangeHandler = (event) => {
-		enteredConfirmPassword = event.target.value;
-		if (enteredConfirmPassword.length >= 8) {
-			confirmPasswordIsValid = true;
-		} else {
-			confirmPasswordIsValid = false;
-		}
-	};
-	const confirmPasswordBlurHandler = (event) => {
-		confirmPasswordIsTouched = true;
-		if (enteredConfirmPassword.length < 8) {
-			confirmPasswordIsValid = false;
-		}
-	};
-
 	let formIsValid = false;
-	$: if (emailIsValid && passwordIsValid && confirmPasswordIsValid) {
+	$: if (emailIsValid && passwordIsValid) {
 		formIsValid = true;
 	} else {
 		formIsValid = false;
 	}
-</script>
 
+</script>
 <div class="bg-black min-h-screen pt-5">
-	<h1 class="text-center text-2xl">Create an Account to start tracking</h1>
-	<div class="text-center">
-		<a class="link-hover italic text-xs text-blue-600" href="/login"
-			>Already have an account? Click here to login instead.</a
-		>
-	</div>
-	<div class="exp flex justify-center items-center mt-8">
-		<form on:submit={createUser} class="w-1/3">
+	<div class=" exp flex justify-center items-center mt-10 adjust-for-fixed">
+		<form class="w-1/3" on:submit={submitFunct}>
 			<div class="form-control w-full">
 				<label class="label" for="email">
-					<span class="label-text">Email</span>
+					<span class="label-text">
+						Email
+					</span>
 				</label>
 				<input
 					type="email"
@@ -158,16 +118,17 @@
 				/>
 				{#if emailHasError}
 					<label class="label" for="email">
-						<span class="label-text-alt text-red-500"
-							>Please enter a valid email with "@" and ".com".</span
-						>
+						<span class="label-text-alt text-red-500">
+							Please enter a valid email with "@" and ".com".
+						</span>
 					</label>
 				{/if}
 			</div>
-
 			<div class="form-control w-full">
 				<label class="label" for="password">
-					<span class="label-text">Password</span>
+					<span class="label-text">
+						Password
+					</span>
 				</label>
 				<input
 					type="password"
@@ -179,43 +140,33 @@
 				/>
 				{#if passwordHasError}
 					<label class="label" for="password">
-						<span class="label-text-alt text-red-500">Password must be at least 8 characters.</span>
+						<span class="label-text-alt text-red-500">
+							Password must be at least 8 characters.
+						</span>
 					</label>
 				{/if}
 			</div>
-
-			<div class="form-control w-full">
-				<label class="label" for="password-confirmation">
-					<span class="label-text">Confirm Password</span>
-				</label>
-				<input
-					type="password"
-					name="password-confirmation"
-					placeholder=""
-					class="input input-bordered w-full"
-					on:input={confirmPasswordChangeHandler}
-					on:blur={confirmPasswordBlurHandler}
-				/>
-				{#if confirmPasswordHasError}
-					<label class="label" for="passwod-confirmation">
-						<span class="label-text-alt text-red-500">Password must be at least 8 characters.</span>
-					</label>
-				{/if}
-			</div>
-
 			<div class="form-control w-full mt-4">
-				<button class={buttonClass} disabled={!formIsValid}
-					><span class="btn-text">Create an Account</span></button
-				>
+				<button class={buttonClass} disabled={!formIsValid}> 
+					<span class="btn-text">
+						LOG IN
+					</span>
+				</button>
 			</div>
 		</form>
 	</div>
+	<div class="text-center">
+		<a class="link-hover italic text-xs text-blue-600" href="/signup">
+			No account? Create one!
+		</a>
+	</div>
 </div>
+
 
 <Footer />
 
 <style>
-	h1 {
+	.adjust-for-fixed {
 		margin-top: 100px;
 	}
 
@@ -233,7 +184,7 @@
 		opacity: 0;
 	}
 	.btn--loading::after {
-		content: '';
+		content: "";
 		position: absolute;
 		width: 25px;
 		height: 25px;
@@ -245,7 +196,7 @@
 		border: 4px solid transparent;
 		border-top-color: rgb(87, 92, 90);
 		border-radius: 50%;
-		animation: spin 1s ease infinite;
+		animation: spin 1s ease infinite
 	}
 	@keyframes spin {
 		from {

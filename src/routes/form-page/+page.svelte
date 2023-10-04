@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
-  import { navigate } from '@svelte-routing/core';
+  import { goto } from '$app/navigation';
+  // import { navigate } from '@svelte-routing/core';
 
   let date = '';
   let title = '';
@@ -30,7 +31,7 @@
   async function handleSubmit() {
     const success = await sendExpenseData(date, title, amount);
 if (success) {
-  navigate('/expenses');
+  goto('/afterlogin');
 } else {
   console.log('Expense submission failed.');
     // console.log('Expense submitted:', { date, title, amount });

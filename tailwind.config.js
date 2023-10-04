@@ -5,5 +5,9 @@ export default {
     extend: {},
   },
   plugins: [require("daisyui"),require('@tailwindcss/typography'),],
-}
+  daisyui: {
+    themes: [ "winter", "summer"],
+		darkTheme: "summer"
+  }
+};
 
